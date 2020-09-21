@@ -1,0 +1,787 @@
+---
+title: "Bai_Xin_HW1"
+author: "xbai15"
+date: "9/17/2020"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# **Introduction**
+This R Markdown document is the analyzation of *employee_attrition.csv* dataset. <br>The goal is to find out and present the most interesting and significant rules which could predict *`Attrition`*.
+
+### Information of Dataset
+This data set presents an employee survey from IBM, indicating if there is attrition or not. It consist of 1176 observations and 35 variables.
+
+### Information of Variables
+##### *Numerical Variables*
+
+| Variables | Type | Missing Counts | Min | Median | Mean | Max |
+|----------------|----------------|----------------|----------------|----------------|----------------|----------------|
+|   $Age$ | int | 0 | 18 | 36 | 36 | 60 |
+|   $DailyRate$ | int | 0 | 796 | 800 | 36 | 60 |
+|   $DistanceFromHome$ | int | 2 | 1 | 7 | 9.5 | 224 |
+|   $Education$ | int | 0 | 1 | 3 | 2.9 | 5 |
+|   $EmployeeCount$ | int | 0 | 1 | 1 | 1 | 1 |
+|   $EmployeeNumber$ | int | 0 | 1 | 1032.5 | 1036.4 | 2068 |
+|   $EnvironmentSatisfaction$ | int | 0 | 1 | 3 | 2.7 | 4 |
+|   $HourlyRate$ | int | 0 | 30 | 66 | 65.8 | 100 |
+|   $JobInvolvement$ | int | 0 | 1 | 3 | 2.7 | 4 |
+|   $JobLevel$ | int | 1 | 1 | 2 | 2.1 | 5 |
+|   $JobSatisfaction$ | int | 0 | 1 | 3 | 2.7 | 4 |
+|   $MonthlyIncome$ | int | 0 | 1009 | 4950 | 6526 | 19973 |
+|   $MonthlyRate$ | int | 0 | 2094 | 14488 | 14468 | 26999 |
+|   $NumCompaniesWorked$ | int | 0 | 0 | 2 | 2.7 | 9 |
+|   $PercentSalaryHike$ | int | 1 | 11 | 14 | 15.3 | 25 |
+|   $RelationshipSatisfaction$ | int | 1 | 3 | 3 | 3.2 | 4 |
+|   $StandardHours$ | int | 0 | 80 | 80 | 80 | 80 |
+|   $StockOptionLevel$ | int | 0 | 0 | 1 | 0.8 | 3 |
+|   $TotalWorkingYears$ | int | 2 | 0 | 10 | 11.4 | 114 |
+|   $TrainingTimeLastYear$ | int | 0 | 0 | 3 | 2.8 | 6 |
+|   $WorkLifeBalance$ | int | 0 | 1 | 3 | 2.7 | 4 |
+|   $YearsAtCompany$ | int | 0 | 0 | 5 | 6.9 | 40 |
+|   $YearsInCurrentRole$ | int | 0 | 0 | 3 | 4.2 | 18 |
+|   $YearsSinceLastPromotion$ | int | 1 | 0 | 1 | 2.1 | 15 |
+|   $YearsWithCurrManager$ | int | 0 | 0 | 3 | 4.2 | 219 |
+
+##### *Categorical Variables*
+
+| Variables | Type | Missing Counts | Unique Counts |
+|----------------------------|--------------------------------------------|----------------------------|----------------------------|
+|   $Attrition$ | chr | 0 | 2 |
+|   $BusinessTravel$ | chr | 0 | 3 |
+|   $Department$ | chr | 0 | 3 |
+|   $EducationField$ | chr | 0 | 6 |
+|   $Gender$ | chr | 0 | 2 |
+|   $JobRole$ | chr | 0 | 9 |
+|   $MaritalStatus$ | chr | 0 | 3 |
+|   $Over18$ | chr | 0 | 1 |
+|   $OverTime$ | chr | 0 | 3 |
+
+
+# **Exploratory Data Analysis(EDA)**
+### Data Cleaning
+##### Columns w/ NA
+
+```{r, echo = FALSE}
+
+library(knitr)
+library(arules)
+library(arulesViz)
+
+ea <- read.csv("https://raw.githubusercontent.com/xbai15/IST707-HW1/master/employee_attrition.csv?token=AQV5GHX24J6LREOIDR7BFTC7M4DDQ")
+
+```
+
+```{r}
+
+colnames(ea)[colSums((is.na(ea)))>0]
+
+```
+
+DistanceFromHome
+```{r}
+
+ea$DistanceFromHome[is.na(ea$DistanceFromHome)] <- mean(ea$DistanceFromHome, na.rm = TRUE)
+
+```
+
+Gender
+```{r}
+
+ea$Gender[is.na(ea$Gender)]<-rownames(sort((table(ea$Gender)),decreasing = TRUE))[1]
+
+```
+
+JobLevel
+```{r}
+
+ea$JobLevel[is.na(ea$JobLevel)] <- mean(ea$JobLevel, na.rm = TRUE)
+
+```
+
+OverTime
+```{r}
+
+ea$OverTime[is.na(ea$OverTime)]<-rownames(sort((table(ea$OverTime)),decreasing = TRUE))[1]
+
+```
+
+PercentSalaryHike
+```{r}
+
+ea$PercentSalaryHike[is.na(ea$PercentSalaryHike)] <- mean(ea$PercentSalaryHike, na.rm = TRUE)
+
+```
+
+PerformanceRating
+```{r}
+
+ea$PerformanceRating[is.na(ea$PerformanceRating)] <- mean(ea$PerformanceRating, na.rm = TRUE)
+
+```
+
+RelationshipSatisfaction
+```{r}
+
+ea$RelationshipSatisfaction[is.na(ea$RelationshipSatisfaction)] <- mean(ea$RelationshipSatisfaction, na.rm = TRUE)
+
+```
+
+TotalWorkingYears
+```{r}
+
+ea$TotalWorkingYears[is.na(ea$TotalWorkingYears)] <- mean(ea$TotalWorkingYears, na.rm = TRUE)
+
+```
+
+YearsSinceLastPromotion
+```{r}
+
+ea$YearsSinceLastPromotion[is.na(ea$YearsSinceLastPromotion)] <- mean(ea$YearsSinceLastPromotion, na.rm = TRUE)
+
+```
+
+Check NA now
+```{r}
+
+colnames(ea)[colSums((is.na(ea)))>0]
+
+```
+
+##### Remove Columns w/ constant value
+Remove "Employee Count" "Over18" "StandardHours" "EmployeeNumber"
+```{r}
+
+ea <- within(ea, rm("EmployeeCount", "Over18", "StandardHours", "EmployeeNumber"))
+
+```
+
+## Visualization {.tabset .tabset-pills}
+### Age
+```{r, echo = FALSE}
+
+ea <- read.csv("https://raw.githubusercontent.com/xbai15/IST707-HW1/master/employee_attrition.csv?token=AQV5GHX24J6LREOIDR7BFTC7M4DDQ")
+
+
+hist(ea$Age, col = "#4AA4DE",breaks = 40, main = "Employee Age Distribution", xlab = "Age", border = FALSE)
+
+barplot(table(ea$Attrition,ea$Age), col = c("#4AA4DE","gray"), border = FALSE,xlab = "Age", ylab = "Attrition", main = "Attrition base on Employee Age")
+legend("topright", levels(ea$Attrition), fill = c("#4AA4DE","gray"), border = FALSE, bty = "n")
+
+```
+
+### Business Travel
+```{r, echo = FALSE}
+library(ggplot2)
+
+ggplot(data.frame(ea$BusinessTravel), aes(x=ea$BusinessTravel)) +
+  geom_bar(fill = "#4AA4DE") + theme_classic() + ggtitle("Employee Business Travel Distribution") +xlab("Business Travel")
+
+dat <- data.frame(table(ea$BusinessTravel,ea$Attrition))
+names(dat) <- c("BusinessTravel", "Attrition", "Count")
+ggplot(data = dat, aes(x = BusinessTravel, y = Count, fill = Attrition)) + geom_bar(stat = "identity")+ scale_fill_manual(values = c("#4AA4DE","gray")) + theme_classic() + ggtitle("Attrition base on Employee Business Travel") +xlab("Business Travel")
+```
+
+### Daily Rate
+```{r, echo = FALSE}
+
+hist(ea$DailyRate, col = "#4AA4DE",breaks = 100, main = "Employee Daily Rate Distribution", xlab = "Daily Rate", border = FALSE)
+
+barplot(table(ea$Attrition,ea$DailyRate), col = c("#4AA4DE","gray"), border = FALSE,xlab = "Daily Rate", ylab = "Attrition", main = "Attrition base on Employee Daily Rate")
+legend("topright", levels(ea$Attrition), fill = c("#4AA4DE","gray"), border = FALSE, bty = "n")
+
+```
+
+### Department
+```{r, echo = FALSE}
+library(ggplot2)
+
+ggplot(data.frame(ea$Department), aes(x=ea$Department)) +
+  geom_bar(fill = "#4AA4DE") + theme_classic() + ggtitle("Employee Department Distribution") +xlab("Department")
+
+dat <- data.frame(table(ea$Department,ea$Attrition))
+names(dat) <- c("Department", "Attrition", "Count")
+ggplot(data = dat, aes(x = Department, y = Count, fill = Attrition)) + geom_bar(stat = "identity")+ scale_fill_manual(values = c("#4AA4DE","gray")) + theme_classic() + ggtitle("Attrition base on Employee Department") +xlab("Department")
+```
+
+
+### Distance From Home
+```{r, echo = FALSE}
+
+hist(ea$DistanceFromHome, col = "#4AA4DE",breaks = 200, main = "Employee Distance from home Distribution", xlab = "Distance from home", border = FALSE)
+
+barplot(table(ea$Attrition,ea$DistanceFromHome), col = c("#4AA4DE","gray"), border = FALSE,xlab = "Distance from home", ylab = "Attrition", main = "Attrition base on Employee Distance from home")
+legend("topright", levels(ea$Attrition), fill = c("#4AA4DE","gray"), border = FALSE, bty = "n")
+
+```
+
+
+Note: There is a abnormally large value 224 in this column.
+
+We made a assumption that the 224 was a typo and it's suppose to be 24
+```{r}
+
+sort(ea$DistanceFromHome, decreasing = TRUE)[1]
+
+ea$DistanceFromHome[ea$DistanceFromHome == 224] <- 24
+
+```
+
+
+### Education
+```{r, echo = FALSE}
+
+hist(ea$Education, col = "#4AA4DE",breaks = 5, main = "Employee Education Distribution", xlab = "Education", border = FALSE)
+
+barplot(table(ea$Attrition,ea$Education), col = c("#4AA4DE","gray"), border = FALSE,xlab = "Education", ylab = "Attrition", main = "Attrition base on Employee Education")
+legend("topright", levels(ea$Attrition), fill = c("#4AA4DE","gray"), border = FALSE, bty = "n")
+
+```
+
+### Education Field
+```{r, echo = FALSE}
+library(ggplot2)
+
+ggplot(data.frame(ea$EducationField), aes(x=ea$EducationField)) +
+  geom_bar(fill = "#4AA4DE") + theme_classic() + ggtitle("Employee Education Field Distribution") +xlab("Education Field")
+
+dat <- data.frame(table(ea$EducationField,ea$Attrition))
+names(dat) <- c("EducationField", "Attrition", "Count")
+ggplot(data = dat, aes(x = EducationField, y = Count, fill = Attrition)) + geom_bar(stat = "identity")+ scale_fill_manual(values = c("#4AA4DE","gray")) + theme_classic() + ggtitle("Attrition base on Employee Education Field") +xlab("Education Field")
+```
+
+### Environment Satisfaction
+```{r, echo = FALSE}
+
+hist(ea$EnvironmentSatisfaction, col = "#4AA4DE",breaks = 5, main = "Employee Environment Satisfaction Distribution", xlab = "Environment Satisfaction", border = FALSE)
+
+barplot(table(ea$Attrition,ea$EnvironmentSatisfaction), col = c("#4AA4DE","gray"), border = FALSE,xlab = "Environment Satisfaction", ylab = "Attrition", main = "Attrition base on Employee Environment Satisfaction")
+legend("topright", levels(ea$Attrition), fill = c("#4AA4DE","gray"), border = FALSE, bty = "n")
+
+```
+
+### Gender
+```{r, echo = FALSE}
+library(ggplot2)
+
+ggplot(data.frame(ea$Gender), aes(x=ea$Gender)) +
+  geom_bar(fill = "#4AA4DE") + theme_classic() + ggtitle("Employee Gender Distribution") +xlab("Gender")
+
+dat <- data.frame(table(ea$Gender,ea$Attrition))
+names(dat) <- c("Gender", "Attrition", "Count")
+ggplot(data = dat, aes(x = Gender, y = Count, fill = Attrition)) + geom_bar(stat = "identity")+ scale_fill_manual(values = c("#4AA4DE","gray")) + theme_classic() + ggtitle("Attrition base on Employee Gender") +xlab("Gender")
+```
+
+### Hourly Rate
+```{r, echo = FALSE}
+
+hist(ea$HourlyRate, col = "#4AA4DE",breaks = 100, main = "Employee Hourly Rate Distribution", xlab = "Hourly Rate", border = FALSE)
+
+barplot(table(ea$Attrition,ea$HourlyRate), col = c("#4AA4DE","gray"), border = FALSE,xlab = "Hourly Rate", ylab = "Attrition", main = "Attrition base on Employee Hourly Rate")
+legend("topright", levels(ea$Attrition), fill = c("#4AA4DE","gray"), border = FALSE, bty = "n")
+
+```
+
+### Job Involvement
+```{r, echo = FALSE}
+
+hist(ea$JobInvolvement, col = "#4AA4DE",breaks = 5, main = "Employee Job Involvement Distribution", xlab = "Job Involvement", border = FALSE)
+
+barplot(table(ea$Attrition,ea$JobInvolvement), col = c("#4AA4DE","gray"), border = FALSE,xlab = "Job Involvement", ylab = "Attrition", main = "Attrition base on Employee Job Involvement")
+legend("topright", levels(ea$Attrition), fill = c("#4AA4DE","gray"), border = FALSE, bty = "n")
+
+```
+
+### Job Level
+```{r, echo = FALSE}
+
+hist(ea$JobLevel, col = "#4AA4DE",breaks = 5, main = "Employee Job Level Distribution", xlab = "Job Level", border = FALSE)
+
+barplot(table(ea$Attrition,ea$JobLevel), col = c("#4AA4DE","gray"), border = FALSE,xlab = "Job Level", ylab = "Attrition", main = "Attrition base on Employee Job Level")
+legend("topright", levels(ea$Attrition), fill = c("#4AA4DE","gray"), border = FALSE, bty = "n")
+
+```
+
+### Job Role
+```{r, echo = FALSE}
+library(ggplot2)
+
+ggplot(data.frame(ea$JobRole), aes(x=ea$JobRole)) +
+  geom_bar(fill = "#4AA4DE") + theme_classic() + ggtitle("Employee Job Role Distribution") +xlab("Job Role") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+dat <- data.frame(table(ea$JobRole,ea$Attrition))
+names(dat) <- c("JobRole", "Attrition", "Count")
+ggplot(data = dat, aes(x = JobRole, y = Count, fill = Attrition)) + geom_bar(stat = "identity")+ scale_fill_manual(values = c("#4AA4DE","gray")) + theme_classic() + ggtitle("Attrition base on Employee Job Role") +xlab("Job Role") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+### Job Satisfaction
+```{r, echo = FALSE}
+
+hist(ea$JobSatisfaction, col = "#4AA4DE",breaks = 5, main = "Employee Job Satisfaction Distribution", xlab = "Job Satisfaction", border = FALSE)
+
+barplot(table(ea$Attrition,ea$JobSatisfaction), col = c("#4AA4DE","gray"), border = FALSE,xlab = "Job Satisfaction", ylab = "Attrition", main = "Attrition base on Employee Job Satisfaction")
+legend("topright", levels(ea$Attrition), fill = c("#4AA4DE","gray"), border = FALSE, bty = "n")
+
+```
+
+### Marital Status
+```{r, echo = FALSE}
+library(ggplot2)
+
+ggplot(data.frame(ea$MaritalStatus), aes(x=ea$MaritalStatus)) +
+  geom_bar(fill = "#4AA4DE") + theme_classic() + ggtitle("Employee Marital Status Distribution") +xlab("Marital Status")
+
+dat <- data.frame(table(ea$MaritalStatus,ea$Attrition))
+names(dat) <- c("MaritalStatus", "Attrition", "Count")
+ggplot(data = dat, aes(x = MaritalStatus, y = Count, fill = Attrition)) + geom_bar(stat = "identity")+ scale_fill_manual(values = c("#4AA4DE","gray")) + theme_classic() + ggtitle("Attrition base on Employee Marital Status") +xlab("Marital Status")
+```
+
+### Monthly Income
+```{r, echo = FALSE}
+
+hist(ea$MonthlyIncome, col = "#4AA4DE",breaks = 100, main = "Employee Monthly Income Distribution", xlab = "Monthly Income", border = FALSE)
+
+barplot(table(ea$Attrition,ea$MonthlyIncome), col = c("#4AA4DE","gray"),border = FALSE,xlab = "Monthly Income", ylab = "Attrition", main = "Attrition base on Employee Monthly Income")
+legend("topright", levels(ea$Attrition), fill = c("#4AA4DE","gray"), border = FALSE, bty = "n")
+
+```
+
+### Monthly Rate
+```{r, echo = FALSE}
+
+hist(ea$MonthlyRate, col = "#4AA4DE",breaks = 100, main = "Employee Monthly Rate Distribution", xlab = "Monthly Rate", border = FALSE)
+
+barplot(table(ea$Attrition,ea$MonthlyRate), col = c("#4AA4DE","gray"),border = FALSE,xlab = "Monthly Rate", ylab = "Attrition", main = "Attrition base on Employee Monthly Rate")
+legend("topright", levels(ea$Attrition), fill = c("#4AA4DE","gray"), border = FALSE, bty = "n")
+
+```
+
+### Number of Companies Worked
+```{r, echo = FALSE}
+
+hist(ea$NumCompaniesWorked, col = "#4AA4DE",breaks = 10, main = "Employee Number of Companies Worked Distribution", xlab = "Number of Companies Worked", border = FALSE)
+
+barplot(table(ea$Attrition,ea$NumCompaniesWorked), col = c("#4AA4DE","gray"),border = FALSE,xlab = "Number of Companies Worked", ylab = "Attrition", main = "Attrition base on Employee Number of Companies Worked")
+legend("topright", levels(ea$Attrition), fill = c("#4AA4DE","gray"), border = FALSE, bty = "n")
+
+```
+
+### Percent Salary Hike
+```{r, echo = FALSE}
+
+hist(ea$PercentSalaryHike, col = "#4AA4DE",breaks = 15, main = "Employee Percent Salary Hike Distribution", xlab = "Percent Salary Hike", border = FALSE)
+
+barplot(table(ea$Attrition,ea$PercentSalaryHike), col = c("#4AA4DE","gray"),border = FALSE,xlab = "Percent Salary Hike", ylab = "Attrition", main = "Attrition base on Employee Percent Salary Hike")
+legend("topright", levels(ea$Attrition), fill = c("#4AA4DE","gray"), border = FALSE, bty = "n")
+
+```
+
+### Performance Rating
+```{r, echo = FALSE}
+
+hist(ea$PerformanceRating, col = "#4AA4DE",breaks = 2, main = "Employee Performance Rating Distribution", xlab = "Performance Rating", border = FALSE)
+
+barplot(table(ea$Attrition,ea$PerformanceRating), col = c("#4AA4DE","gray"),border = FALSE,xlab = "Performance Rating", ylab = "Attrition", main = "Attrition base on Employee Performance Rating")
+legend("topright", levels(ea$Attrition), fill = c("#4AA4DE","gray"), border = FALSE, bty = "n")
+
+```
+
+### Relationship Satisfaction
+```{r, echo = FALSE}
+
+hist(ea$RelationshipSatisfaction, col = "#4AA4DE",breaks = 5, main = "Employee Relationship Satisfaction Distribution", xlab = "Relationship Satisfaction", border = FALSE)
+
+barplot(table(ea$Attrition,ea$RelationshipSatisfaction), col = c("#4AA4DE","gray"),border = FALSE,xlab = "Relationship Satisfaction", ylab = "Attrition", main = "Attrition base on Employee Relationship Satisfaction")
+legend("topright", levels(ea$Attrition), fill = c("#4AA4DE","gray"), border = FALSE, bty = "n")
+
+```
+
+### Stock Option Level
+```{r, echo = FALSE}
+
+hist(ea$StockOptionLevel, col = "#4AA4DE",breaks = 5, main = "Employee Stock Option Level Distribution", xlab = "Stock Option Level", border = FALSE)
+
+barplot(table(ea$Attrition,ea$StockOptionLevel), col = c("#4AA4DE","gray"),border = FALSE,xlab = "Stock Option Level", ylab = "Attrition", main = "Attrition base on Employee Stock Option Level")
+legend("topright", levels(ea$Attrition), fill = c("#4AA4DE","gray"), border = FALSE, bty = "n")
+
+```
+
+### Total Working Years
+```{r, echo = FALSE}
+
+hist(ea$TotalWorkingYears, col = "#4AA4DE",breaks = 40, main = "Employee Total Working Years Distribution", xlab = "Total Working Years", border = FALSE)
+
+barplot(table(ea$Attrition,ea$TotalWorkingYears), col = c("#4AA4DE","gray"),border = FALSE,xlab = "Total Working Years", ylab = "Attrition", main = "Attrition base on Employee Total Working Years")
+legend("topright", levels(ea$Attrition), fill = c("#4AA4DE","gray"), border = FALSE, bty = "n")
+
+```
+
+Note: There is a abnormally large value 114 in this column.
+
+We made a assumption that the 114 was a typo and it's suppose to be 14
+```{r}
+
+sort(ea$TotalWorkingYears, decreasing = TRUE)[1]
+
+ea$DistanceFromHome[ea$DistanceFromHome == 114] <- 14
+
+```
+
+### Training Time Last Year
+```{r, echo = FALSE}
+
+hist(ea$TrainingTimesLastYear, col = "#4AA4DE",breaks = 6, main = "Employee Training Time Last Year Distribution", xlab = "Training Time Last Year", border = FALSE)
+
+barplot(table(ea$Attrition,ea$TrainingTimesLastYear), col = c("#4AA4DE","gray"),border = FALSE,xlab = "Training Time Last Year", ylab = "Attrition", main = "Attrition base on Employee Training Time Last Year")
+legend("topright", levels(ea$Attrition), fill = c("#4AA4DE","gray"), border = FALSE, bty = "n")
+
+```
+
+### Working Life Balance
+```{r, echo = FALSE}
+
+hist(ea$WorkLifeBalance, col = "#4AA4DE",breaks = 10, main = "Employee Working Life Balance Distribution", xlab = "Working Life Balance", border = FALSE)
+
+barplot(table(ea$Attrition,ea$WorkLifeBalance), col = c("#4AA4DE","gray"),border = FALSE,xlab = "Working Life Balance", ylab = "Attrition", main = "Attrition base on Employee Working Life Balance")
+legend("topright", levels(ea$Attrition), fill = c("#4AA4DE","gray"), border = FALSE, bty = "n")
+
+```
+
+### Years At Company
+```{r, echo = FALSE}
+
+hist(ea$YearsAtCompany, col = "#4AA4DE",breaks = 40, main = "Employee Years At Company Distribution", xlab = "Years At Company", border = FALSE)
+
+barplot(table(ea$Attrition,ea$YearsAtCompany), col = c("#4AA4DE","gray"),border = FALSE,xlab = "Years At Company", ylab = "Attrition", main = "Attrition base on Employee Years At Company")
+legend("topright", levels(ea$Attrition), fill = c("#4AA4DE","gray"), border = FALSE, bty = "n")
+
+```
+
+### Years In Current Role
+```{r, echo = FALSE}
+
+hist(ea$YearsInCurrentRole, col = "#4AA4DE",breaks = 20, main = "Employee Years In Current Role Distribution", xlab = "Years In Current Role", border = FALSE)
+
+barplot(table(ea$Attrition,ea$YearsInCurrentRole), col = c("#4AA4DE","gray"),border = FALSE,xlab = "Years In Current Role", ylab = "Attrition", main = "Attrition base on Employee Years In Current Role")
+legend("topright", levels(ea$Attrition), fill = c("#4AA4DE","gray"), border = FALSE, bty = "n")
+
+```
+
+### Years Since Last Promotion
+```{r, echo = FALSE}
+
+hist(ea$YearsSinceLastPromotion, col = "#4AA4DE",breaks = 15, main = "Employee Years Since Last Promotion Distribution", xlab = "Years Since Last Promotion", border = FALSE)
+
+barplot(table(ea$Attrition,ea$YearsSinceLastPromotion), col = c("#4AA4DE","gray"),border = FALSE,xlab = "Years Since Last Promotion", ylab = "Attrition", main = "Attrition base on Employee Years Since Last Promotion")
+legend("topright", levels(ea$Attrition), fill = c("#4AA4DE","gray"), border = FALSE, bty = "n")
+
+```
+
+### Years With Current Manager
+```{r, echo = FALSE}
+
+hist(ea$YearsWithCurrManager, col = "#4AA4DE",breaks = 200, main = "Employee Years With Current Manager Distribution", xlab = "Years With Current Manager", border = FALSE)
+
+barplot(table(ea$Attrition,ea$YearsWithCurrManager), col = c("#4AA4DE","gray"),border = FALSE,xlab = "Years With Current Manager", ylab = "Attrition", main = "Attrition base on Employee Years With Current Manager")
+legend("topright", levels(ea$Attrition), fill = c("#4AA4DE","gray"), border = FALSE, bty = "n")
+
+```
+
+Note: There is a abnormally large value 219 in this column.
+
+we made an assumption that the 219 was a type and because that employee spent 20 years at the company so it's suppose to be 19
+```{r}
+
+sort(ea$YearsWithCurrManager, decreasing = TRUE)[1]
+
+ea$YearsWithCurrManager[ea$YearsWithCurrManager == 219] <- 19
+
+```
+
+## {-}
+
+# **Association Rule Mining**
+### Turn Numerical Variables into Categorical Varisbles
+
+```{r}
+ea$Age<-arules::discretize(ea$Age, breaks = 3,labels = c("Younger-Age","Mid-Age","Older-Age"),method = "frequency")
+ea$Age<-as.factor(ea$Age)
+
+```
+
+```{r}
+
+ea$Attrition<-as.factor(ea$Attrition)
+
+```
+
+```{r}
+
+ea$BusinessTravel<-as.factor(ea$BusinessTravel)
+
+```
+
+```{r}
+ea$DailyRate<-arules::discretize(ea$DailyRate, breaks = 3,labels = c("Low","Medium","High"),method = "frequency")
+ea$DailyRate<-as.factor(ea$DailyRate)
+
+```
+
+```{r}
+
+ea$Department<-as.factor(ea$Department)
+
+```
+
+```{r}
+ea$DistanceFromHome<-arules::discretize(ea$DistanceFromHome, breaks = 3,labels = c("Near","Medium","Far"),method = "frequency")
+ea$DistanceFromHome<-as.factor(ea$DistanceFromHome)
+
+```
+
+```{r}
+ea$Education<-arules::discretize(ea$Education, breaks = 4,labels = c("Poor Educated", "Basic Educated", "Well Educated", "Excellent Educated"),method = "frequency")
+ea$Education<-as.factor(ea$Education)
+
+```
+
+```{r}
+
+ea$EducationField<-as.factor(ea$EducationField)
+
+```
+
+```{r}
+ea$EnvironmentSatisfaction<-arules::discretize(ea$EnvironmentSatisfaction, breaks = 2,labels = c("low", "high"),method = "frequency")
+ea$EnvironmentSatisfaction<-as.factor(ea$EnvironmentSatisfaction)
+
+```
+
+```{r}
+
+ea$Gender<-as.factor(ea$Gender)
+
+```
+
+```{r}
+ea$HourlyRate<-arules::discretize(ea$HourlyRate, breaks = 3,labels = c("Low","Medium","High"),method = "frequency")
+ea$HourlyRate<-as.factor(ea$HourlyRate)
+
+```
+
+```{r}
+ea$JobInvolvement<-arules::discretize(ea$JobInvolvement, breaks = 3,labels = c("Low","Medium","High"),method = "interval")
+ea$JobInvolvement<-as.factor(ea$JobInvolvement)
+
+```
+
+```{r}
+ea$JobLevel<-arules::discretize(ea$JobLevel, breaks = 3,labels = c("Junior Level", "Senior Level", "Manager Level"),method = "interval")
+ea$JobLevel<-as.factor(ea$JobLevel)
+
+```
+
+```{r}
+
+ea$JobRole<-as.factor(ea$JobRole)
+
+```
+
+```{r}
+ea$JobSatisfaction<-arules::discretize(ea$JobSatisfaction, breaks = 2,labels = c("low", "high"),method = "frequency")
+ea$JobSatisfaction<-as.factor(ea$JobSatisfaction)
+
+```
+
+```{r}
+
+ea$MaritalStatus<-as.factor(ea$MaritalStatus)
+
+```
+
+```{r}
+ea$MonthlyIncome<-arules::discretize(ea$MonthlyIncome, breaks = 3,labels = c("Low","Medium","High"),method = "frequency")
+ea$MonthlyIncome<-as.factor(ea$MonthlyIncome)
+
+```
+
+```{r}
+ea$MonthlyRate<-arules::discretize(ea$MonthlyRate, breaks = 3,labels = c("Low","Medium","High"),method = "frequency")
+ea$MonthlyRate<-as.factor(ea$MonthlyRate)
+
+```
+
+```{r}
+ea$NumCompaniesWorked<-arules::discretize(ea$NumCompaniesWorked, breaks = 2,labels = c("low", "high"),method = "frequency")
+ea$NumCompaniesWorked<-as.factor(ea$NumCompaniesWorked)
+
+```
+
+```{r}
+ea$PercentSalaryHike<-arules::discretize(ea$PercentSalaryHike, breaks = 3,labels = c("Low","Medium","High"),method = "frequency")
+ea$PercentSalaryHike<-as.factor(ea$PercentSalaryHike)
+
+```
+
+```{r}
+ea$PerformanceRating<-arules::discretize(ea$PerformanceRating, breaks = 2,labels = c("low", "high"),method = "interval")
+ea$PerformanceRating<-as.factor(ea$PerformanceRating)
+
+```
+
+```{r}
+ea$RelationshipSatisfaction<-arules::discretize(ea$RelationshipSatisfaction, breaks = 2,labels = c("low", "high"),method = "frequency")
+ea$RelationshipSatisfaction<-as.factor(ea$RelationshipSatisfaction)
+
+```
+
+```{r}
+ea$StockOptionLevel<-arules::discretize(ea$StockOptionLevel, breaks = 2,labels = c("low", "high"),method = "frequency")
+ea$StockOptionLevel<-as.factor(ea$StockOptionLevel)
+
+```
+
+```{r}
+ea$TotalWorkingYears<-arules::discretize(ea$TotalWorkingYears, breaks = 2,labels = c("short", "long"),method = "frequency")
+ea$TotalWorkingYears<-as.factor(ea$TotalWorkingYears)
+
+```
+
+```{r}
+ea$TrainingTimesLastYear<-arules::discretize(ea$TrainingTimesLastYear, breaks = 2,labels = c("low", "high"),method = "frequency")
+ea$TrainingTimesLastYear<-as.factor(ea$TrainingTimesLastYear)
+
+```
+
+```{r}
+ea$WorkLifeBalance<-arules::discretize(ea$WorkLifeBalance, breaks = 2,labels = c("low", "high"),method = "frequency")
+ea$WorkLifeBalance<-as.factor(ea$WorkLifeBalance)
+
+```
+
+```{r}
+ea$YearsAtCompany<-arules::discretize(ea$YearsAtCompany, breaks = 2,labels = c("short", "long"),method = "frequency")
+ea$YearsAtCompany<-as.factor(ea$YearsAtCompany)
+
+```
+
+```{r}
+ea$YearsInCurrentRole<-arules::discretize(ea$YearsInCurrentRole, breaks = 2,labels = c("short", "long"),method = "frequency")
+ea$YearsInCurrentRole<-as.factor(ea$YearsInCurrentRole)
+
+```
+
+```{r}
+ea$YearsSinceLastPromotion<-arules::discretize(ea$YearsSinceLastPromotion, breaks = 2,labels = c("short", "long"),method = "frequency")
+ea$YearsSinceLastPromotion<-as.factor(ea$YearsSinceLastPromotion)
+
+```
+
+```{r}
+ea$YearsWithCurrManager<-arules::discretize(ea$YearsWithCurrManager, breaks = 2,labels = c("short", "long"),method = "frequency")
+ea$YearsWithCurrManager<-as.factor(ea$YearsWithCurrManager)
+
+```
+
+## Run Association Rule Mining Algorithm {.tabset .tabset-pills}
+### Baseline Model
+When Attrition = Yes
+```{r}
+fac_var <- sapply(ea, is.factor)
+
+ea_trans <- as(ea[,fac_var], "transactions")
+
+Attrition_Yes <- apriori(data = ea_trans, parameter = list(support = 0.01, confidence = 0.5), 
+                         appearance = list(default = "lhs", rhs = c("Attrition=Yes")))
+```
+
+```{r}
+
+Attrition_Yes<-head(sort(Attrition_Yes,decreasing = T,by="lift"),5)
+
+inspect(head(sort(Attrition_Yes, by = "lift", descreasing = T), 5))
+
+```
+Plot the association rules with Attrition = Yes
+```{r}
+
+plot(Attrition_Yes,method="graph")
+print("Top 5 rules predict who leave:", inspect(head(sort(Attrition_Yes, by = "lift", descreasing = T), 5))[,1])
+
+```
+
+When Attrition = No
+```{r}
+
+Attrition_No <- apriori(data = ea_trans, parameter = list(support = 0.01, confidence = 0.5), 
+                         appearance = list(default = "lhs", rhs = c("Attrition=No")))
+```
+
+```{r}
+
+Attrition_No<-head(sort(Attrition_No,decreasing = T,by="lift"),5)
+
+inspect(head(sort(Attrition_No, by = "lift", descreasing = T), 5))
+
+```
+Plot the association rules with Attrition = No
+```{r}
+
+plot(Attrition_No,method="graph")
+print("Top 5 rules predict who stay:", inspect(head(sort(Attrition_No, by = "lift", descreasing = T), 5))[,1])
+
+```
+
+### Fine Tuned Mode
+When Attrition = Yes
+
+```{r}
+fac_var <- sapply(ea, is.factor)
+
+ea_trans <- as(ea[,fac_var], "transactions")
+
+Attrition_Yes <- apriori(data = ea_trans, parameter = list(support = 0.01, confidence = 0.3), 
+                         appearance = list(default = "lhs", rhs = c("Attrition=Yes")))
+```
+
+```{r}
+
+Attrition_Yes<-head(sort(Attrition_Yes,decreasing = T,by="lift"),5)
+
+inspect(head(sort(Attrition_Yes, by = "lift", descreasing = T), 5))
+
+```
+Plot the association rules with Attrition = Yes
+```{r}
+
+plot(Attrition_Yes,method="graph")
+print("Top 5 rules predict who leave:", inspect(head(sort(Attrition_Yes, by = "lift", descreasing = T), 5))[,1])
+```
+
+When Attrition = No
+```{r}
+
+Attrition_No <- apriori(data = ea_trans, parameter = list(support = 0.01, confidence = 0.3), 
+                         appearance = list(default = "lhs", rhs = c("Attrition=No")))
+```
+
+```{r}
+
+Attrition_No<-head(sort(Attrition_No,decreasing = T,by="lift"),5)
+
+inspect(head(sort(Attrition_No, by = "lift", descreasing = T), 5))
+
+```
+Plot the association rules with Attrition = No
+```{r}
+
+plot(Attrition_No,method="graph")
+print("Top 5 rules predict who stay:", inspect(head(sort(Attrition_No, by = "lift", descreasing = T), 5))[,1])
+
+```
+
+
+
